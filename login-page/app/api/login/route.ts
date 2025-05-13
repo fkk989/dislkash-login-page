@@ -1,10 +1,23 @@
-import { NextResponse } from "next/server"
+import { NextResponse, NextRequest } from "next/server"
 import connectDB from "@/lib/mongodb"
 import User from "@/models/User"
 
-export async function POST(request: Request) {
+
+// Handle OPTIONS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email, password } = await req.json()
 
     // Connect to MongoDB
     await connectDB()
@@ -18,13 +31,17 @@ export async function POST(request: Request) {
     // Save user to database
     await user.save()
 
-    return NextResponse.json({ 
-      success: true, 
-      message: "User registered successfully" 
+    return NextResponse.json({
+      success: true,
+      message: "User registered successfully"
+    }, {
+      status: 200, headers: {
+        "Access-Control-Allow-Origin": "*",
+      }
     })
   } catch (error: any) {
     console.error("Login error:", error)
-    
+
     // Handle duplicate email error
     if (error.code === 11000) {
       return NextResponse.json(
